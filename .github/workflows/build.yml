@@ -1,0 +1,79 @@
+name: Test and publish Qwen 21 Pro
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python -m pip install Pillow==12.3.0
+      - run: python -m unittest discover -s tests -v
+      - run: node --test tests/playground.test.cjs tests/playground-lifecycle.test.cjs
+      - run: python scripts/make_download_command.py --check
+      - run: python -m compileall -q handler.py worker scripts tests custom_nodes
+  container:
+    needs: test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Free disk for CUDA wheel layers
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          docker image prune -af
+          df -h /
+      - uses: docker/setup-buildx-action@v3
+      - id: image
+        run: echo "name=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+      - uses: docker/login-action@v3
+        if: github.event_name != 'pull_request'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          load: true
+          push: false
+          tags: qwen-pro:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Validate final image on CPU without production weights
+        run: docker run --rm --entrypoint python qwen-pro:ci scripts/smoke.py
+      - name: Publish tested image
+        if: github.event_name != 'pull_request'
+        env:
+          IMAGE: ${{ steps.image.outputs.name }}
+        run: |
+          docker tag qwen-pro:ci "$IMAGE:sha-$GITHUB_SHA"
+          docker push "$IMAGE:sha-$GITHUB_SHA"
+          if [ "$GITHUB_REF" = "refs/heads/main" ]; then
+            docker tag qwen-pro:ci "$IMAGE:latest"
+            docker push "$IMAGE:latest"
+          elif [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            docker tag qwen-pro:ci "$IMAGE:$GITHUB_REF_NAME"
+            docker push "$IMAGE:$GITHUB_REF_NAME"
+          fi
+          docker inspect --format '{{json .RepoDigests}}' "$IMAGE:sha-$GITHUB_SHA" > image-digests.json
+      - uses: actions/upload-artifact@v4
+        if: github.event_name != 'pull_request'
+        with:
+          name: image-digests
+          path: image-digests.json
