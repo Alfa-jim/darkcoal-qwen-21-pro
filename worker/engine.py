@@ -41,7 +41,12 @@ class EngineClient:
                       headers={'Content-Type': 'application/json'})
         try:
             with urlopen(req, timeout=timeout) as response:
-                return json.load(response)
+                content = response.read()
+                # Pinned ComfyUI acknowledges history deletion with HTTP 200
+                # and no body. Generation/status/capability responses need JSON.
+                if method == 'POST' and path == '/history' and not content.strip():
+                    return {}
+                return json.loads(content)
         except HTTPError as exc:
             detail = exc.read(2000).decode(errors='replace')
             raise EngineError(f'ComfyUI HTTP {exc.code}: {detail}') from exc
