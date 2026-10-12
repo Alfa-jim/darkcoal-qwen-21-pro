@@ -5,8 +5,17 @@ using **abenzerps UC Q4_K_M diffusion, INT8 ConvRot Qwen3-VL encoder, BF16 VAE**
 This is independent of `darkcoal-qwen-image-21` Turbo. It accepts text prompts
 and up to ten ordered reference pictures, returning base64 PNG plus metadata.
 
-Public image target: `ghcr.io/alfa-jim/darkcoal-qwen-21-pro:latest`.
-Publication and GPU validation status are recorded in `docs/VALIDATION.md`.
+Public image: `ghcr.io/alfa-jim/darkcoal-qwen-21-pro:latest`.
+Verified fixed image (replace the initial image and redeploy existing workers):
+
+```text
+ghcr.io/alfa-jim/darkcoal-qwen-21-pro@sha256:5494dea99f4dde6de79ac7114b40ada5f7cd718f53b109823db46a0512e409c3
+```
+
+This release fixes completed images being reported as failures when ComfyUI
+acknowledges history cleanup with an empty HTTP 200 body. CPU/container checks
+and public registry verification pass. GPU output acceptance remains separate;
+see `docs/VALIDATION.md`.
 
 ## Prepare the shared network volume
 

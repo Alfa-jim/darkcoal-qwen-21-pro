@@ -1,8 +1,14 @@
 # Validation status
 
-Local verification: **26 Python tests and 18 Node tests pass**. The initial Linux
-CI test job passed 24 Python/18 Node tests, compilation and bootstrap checks.
-The cleanup fix adds two transport regressions; its container build is in progress.
+Local and Linux CI verification: **26 Python tests and 18 Node tests pass**,
+including compilation and bootstrap checks. The cleanup fix adds two transport
+regressions. Its Linux AMD64 build, final-runtime CPU smoke and publication passed:
+https://github.com/Alfa-jim/darkcoal-qwen-21-pro/actions/runs/38235279279
+
+Fixed public image:
+`ghcr.io/alfa-jim/darkcoal-qwen-21-pro@sha256:5494dea99f4dde6de79ac7114b40ada5f7cd718f53b109823db46a0512e409c3`
+Verified anonymous access by commit tag, digest and latest; latest matches the
+fixed commit-tag digest. Compressed layer bytes: 5,522,347,915 (5.52 GB).
 No production model files have been downloaded locally. No paid GPU generation
 has been run and no RunPod resources have been created by this task.
 
@@ -37,7 +43,7 @@ Both build-time and final-runtime CPU smoke passed. Initial digest
 `sha256:2fa79b1e82bd20541e1921c9764e15990ed71cf6af7fb66c1e78931e04103f2b`
 was publicly accessible by latest, commit tag, digest, and Docker's anonymous
 manifest authentication flow. It contains the cleanup bug described below and
-must be replaced with the fixed image once that build finishes.
+must be replaced with the fixed image above, followed by worker redeployment.
 
 User-reported first generation reached ComfyUI completion but returned a worker
 JSON error. Root cause: pinned POST /history returns HTTP 200 with an empty body;
