@@ -26,6 +26,11 @@ from worker.workflow import build_workflow, MODEL, ENCODER, VAE
 
 
 async def main():
+    assert torch.version.cuda and tuple(map(int, torch.version.cuda.split('.'))) >= (13, 0), 'Pinned ComfyUI INT8 backend needs CUDA 13 wheels'
+    import server
+    from app.assets.manager import default_asset_manager
+    # Match main.py: node extensions need the singleton server even without a listener.
+    prompt_server = server.PromptServer(asyncio.get_running_loop(), default_asset_manager())
     # Initialize the real registered nodes, including the pinned GGUF fork.
     await nodes.init_extra_nodes(init_custom_nodes=True, init_api_nodes=False)
     required = ['UnetLoaderGGUF', 'TextEncodeQwenImage21', 'QwenImage21Cache', 'ProLoadReference']

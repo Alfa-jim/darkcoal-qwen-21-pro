@@ -15,3 +15,16 @@ Use standard SaveImage, which saves all decoded image channels without stripping
 Ruling: ComfyUI API readiness and model validation precede SDK registration;
 weights load on the first generation, then ComfyUI manages retention/offloading.
 Do not represent CPU smoke checks as CUDA inference tests.
+
+Review fixes: generate browser-safe random seeds, stringify explicit larger
+seeds in metadata, and resize references by Qwen's target pixel area, not longest
+edge. A tensor CPU smoke asserts automatic latent-channel/spatial conversion.
+
+Ruling: switch Pro from CUDA 12.8 to a pinned CUDA 13.0.2 base and Torch cu130.
+Pinned comfy/quant_ops.py explicitly disables the optimized CUDA backend below
+13.0, affecting the selected INT8 ConvRot encoder. Verified official image and
+wheel availability. Cost: RunPod workers require R580+ drivers/CUDA 13 support.
+The Turbo image is unchanged.
+
+Smoke harness follows main.py's server/asset-manager initialization order before
+node registration, eliminating an unrelated node-replacement import warning.

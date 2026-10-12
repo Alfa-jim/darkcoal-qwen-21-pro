@@ -53,7 +53,7 @@ License. Preserve its terms for your intended deployment.
 | Image | `ghcr.io/alfa-jim/darkcoal-qwen-21-pro:latest`, preferably the verified digest |
 | GPU | L40S / RTX 6000 Ada **48 GB** |
 | Host RAM | **64 GB preferred** |
-| CUDA | Compatible with CUDA 12.8 |
+| CUDA | **13.0+**, NVIDIA R580+ driver; select CUDA 13-compatible workers |
 | Container disk | **30 GB**; model storage is separate |
 | Network volume | Same prepared shared volume, mounted at `/runpod-volume` |
 | Active workers | 0 for scale-to-zero, 1 to keep a worker warm |
@@ -62,6 +62,10 @@ License. Preserve its terms for your intended deployment.
 | Public HTTP ports | None; ComfyUI is private on localhost |
 
 ComfyUI and the maintained leejet GGUF loader are pinned in Dockerfile. CUDA
+13 Torch wheels are required by this pinned ComfyUI's optimized INT8 backend.
+The approved CUDA 12.8 starting assumption was updated after inspecting the
+actual backend warning/source; Turbo retains its existing CUDA version.
+See [NVIDIA driver compatibility](https://docs.nvidia.com/deploy/cuda-compatibility/minor-version-compatibility.html).
 Torch/vision and the main Python dependencies are version-pinned; the installed
 transitive versions are saved in `/app/installed-requirements.txt` in the image.
 The build verifies real Qwen/GGUF nodes, accepted sampler/scheduler values, graph
